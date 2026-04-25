@@ -55,5 +55,5 @@
 
 - name: Join nodes in cluster
   ansible.builtin.shell:
-    cmd: "{{ hostvars['k8s_provision__master_node']['_k8s_provision__kubeadm_join_command']['stdout'] | regex_replace('(?s)^.*(kubeadm join.*$)', '\\1') | regex_replace('\\\\\\n\\t', '') }}"
+    cmd: "{{ hostvars[k8s_provision__master_node]['_k8s_provision__kubeadm_join_command']['stdout'] | regex_replace('(?s)^.*(kubeadm join.*$)', '\\1') | regex_replace('\\\\\\n\\t', '') }}"
   when: k8s_provision__master_node != '' and inventory_hostname != k8s_provision__master_node and k8s_provision__cluster_create == true
