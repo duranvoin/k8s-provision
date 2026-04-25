@@ -1,0 +1,9 @@
+---
+- name: Turn off swap
+  ansible.builtin.shell:
+    cmd: "swapoff -a"
+
+- name: Remove swap from fstab
+  ansible.posix.mount:
+    fstype: 'swap'
+    state: 'absent'

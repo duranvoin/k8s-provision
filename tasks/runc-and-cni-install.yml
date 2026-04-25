@@ -1,0 +1,36 @@
+---
+- name: Download cni and runc
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - url: "https://github.com/containernetworking/plugins/releases/download/v{{ k8s_provision__cni_plugin_version }}/cni-plugins-linux-{{ k8s_provision__arch[ansible_facts['architecture']] }}-v{{ k8s_provision__cni_plugin_version }}.tgz"
+      dest: "/tmp/cni-plugins.tgz"
+    - url: "https://github.com/opencontainers/runc/releases/download/v{{ k8s_provision__runc_version }}/runc.{{ k8s_provision__arch[ansible_facts['architecture']] }}"
+      dest: "/usr/local/sbin/runc"
+  loop_control:
+    label: "{{ item.dest }}"
+
+- name: Create folder and check file permissions for cni folder and runc
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: "{{ item.state }}"
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+  loop:
+    - path: "/opt/cni/bin"
+      state: 'directory'
+    - path: "/usr/local/sbin/runc"
+      state: 'file'
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Unarchive cni-plugin bin's
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "/tmp/cni-plugins.tgz"
+    dest: "/opt/cni/bin/"
+    owner: 'root'
+    group: 'root'
+    mode: '0755'

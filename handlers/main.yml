@@ -1,3 +1,16 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# handlers file for k8s-provision
+- name: Systemd daemon-reload after add containerd unit
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+    name: "containerd.service"
+    state: 'started'
+    enabled: true
+  listen: 'containerd-restart'
+
+- name: Systemd daemon-reload after add kubelet unit
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+    name: "kubelet.service"
+    state: 'started'
+    enabled: true
+  listen: 'kubelet-restart'

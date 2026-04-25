@@ -1,0 +1,59 @@
+---
+- name: Check kubelet config exists
+  ansible.builtin.stat:
+    path: "/var/lib/kubelet/config.yaml"
+  register: _k8s_provision__check_kubelet_config
+
+- name: Reset already provision hosts
+  ansible.builtin.shell:
+    cmd: "kubeadm reset -f"
+  when: _k8s_provision__check_kubelet_config['stat']['exists'] == true
+
+- name: Setup master node
+  block:
+  - name: Select master node
+    ansible.builtin.set_fact:
+      _k8s_provision__master_node: "{{ inventory_hostname }}"
+    become: false
+
+  - name: Init master node
+    ansible.builtin.shell:
+      cmd: "kubeadm init --pod-network-cidr={{ k8s_provision__cidr }}"
+    register: _k8s_provision__kubeadm_join_command
+
+  - name: Create ~/.kube dir
+    ansible.builtin.file:
+      path: "/home/{{ ansible_facts['user_id'] }}/.kube"
+      state: 'directory'
+      owner: "{{ ansible_facts['user_id'] }}"
+      group: "{{ ansible_facts['user_id'] }}"
+      mode: '0755'
+    become: false
+
+  - name: Copy config file
+    ansible.builtin.copy:
+      remote_src: true
+      src: "/etc/kubernetes/admin.conf"
+      dest: "{{ ansible_facts['env']['HOME'] }}/.kube/config"
+      owner: "{{ ansible_facts['user_id'] }}"
+      group: "{{ ansible_facts['user_id'] }}"
+      mode: '0644'
+
+  - name: Apply flannel network plugin
+    kubernetes.core.k8s:
+      state: 'present'
+      src: "/tmp/kube-flannel.yml"
+      kubeconfig: "{{ ansible_facts['env']['HOME'] }}/.kube/config"
+    become: false
+
+  - name: Echo master node fqdn
+    ansible.builtin.debug:
+      msg: "{{ _k8s_provision__master_node }} is master node!"
+    become: false
+  run_once: true
+  when: k8s_provision__cluster_create == true
+
+- name: Join nodes in cluster
+  ansible.builtin.shell:
+    cmd: "{{ hostvars['_k8s_provision__master_node']['_k8s_provision__kubeadm_join_command']['stdout'] | regex_replace('(?s)^.*(kubeadm join.*$)', '\\1') | regex_replace('\\\\\\n\\t', '') }}"
+  when: inventory_hostname != _k8s_provision__master_node and k8s_provision__cluster_create == true

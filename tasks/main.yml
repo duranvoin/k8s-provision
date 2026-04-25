@@ -1,3 +1,11 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# tasks file for k8s-provision
+- name: Include tasks for role
+  ansible.builtin.include_tasks:
+    free_form: "{{ item }}"
+  loop:
+    - 'swap-disable.yml'
+    - 'kernel-setup.yml'
+    - 'runc-and-cni-install.yml'
+    - 'containerd-install.yml'
+    - 'k8s-components-install.yml'
+    - 'cluster-setup.yml'

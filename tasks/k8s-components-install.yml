@@ -1,0 +1,76 @@
+---
+- name: Install k8s pip pkg
+  ansible.builtin.pip:
+    state: 'present'
+    name: 'kubernetes'
+    extra_args: "--break-system-packages"
+
+- name: Get k8s release version
+  ansible.builtin.uri:
+    url: "https://dl.k8s.io/release/stable.txt"
+    return_content: true
+  register: _k8s_provision__components_release_version
+  become: false
+
+- name: Create directory for kubelet.service
+  ansible.builtin.file:
+    path: "/usr/lib/systemd/system/kubelet.service.d"
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: Download all k8s components
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+    owner: 'root'
+    group: 'root'
+    mode: "{{ item.mode }}"
+  loop:
+    - url: "https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml"
+      dest: "/tmp/kube-flannel.yml"
+      mode: '0777'
+    - url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v{{ k8s_provision__crictl_version }}/crictl-v{{ k8s_provision__crictl_version }}-linux-{{ k8s_provision__arch[ansible_facts['architecture']] }}.tar.gz"
+      dest: "/tmp/crictl.tar.gz"
+      mode: '0755'
+    - url: "https://dl.k8s.io/release/{{ _k8s_provision__components_release_version.content }}/bin/linux/{{ k8s_provision__arch[ansible_facts['architecture']] }}/kubelet"
+      dest: "{{ k8s_provision__download_dir }}kubelet"
+      mode: '0755'
+    - url: "https://dl.k8s.io/release/{{ _k8s_provision__components_release_version.content }}/bin/linux/{{ k8s_provision__arch[ansible_facts['architecture']] }}/kubeadm"
+      dest: "{{ k8s_provision__download_dir }}kubeadm"
+      mode: '0755'
+    - url: "https://dl.k8s.io/release/{{ _k8s_provision__components_release_version.content }}/bin/linux/{{ k8s_provision__arch[ansible_facts['architecture']] }}/kubectl"
+      dest: "{{ k8s_provision__download_dir }}kubectl"
+      mode: '0755'
+    - url: "https://raw.githubusercontent.com/kubernetes/release/v{{ k8s_provision__release_version }}/cmd/krel/templates/latest/kubelet/kubelet.service"
+      dest: "/usr/lib/systemd/system/kubelet.service"
+      mode: '0644'
+    - url: "https://raw.githubusercontent.com/kubernetes/release/v{{ k8s_provision__release_version }}/cmd/krel/templates/latest/kubeadm/10-kubeadm.conf"
+      dest: "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
+      mode: '0644'
+  loop_control:
+    label: "{{ item.dest }}"
+
+- name: Unarchive crictl
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "/tmp/crictl.tar.gz"
+    dest: "{{ k8s_provision__download_dir }}"
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+ 
+- name: Replace path in kubelet.service and kubeadm.conf
+  ansible.builtin.replace:
+    path: "{{ item  }}"
+    regexp: "(?m)^(.*)/usr/bin/(.*)$"
+    replace: "\\1{{ k8s_provision__download_dir }}\\2"
+  loop:
+    - "/usr/lib/systemd/system/kubelet.service"
+    - "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
+  notify: "kubelet-restart"
+
+- name: Restart kubelet daemon
+  ansible.builtin.meta:
+    free_form: flush_handlers

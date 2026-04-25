@@ -1,0 +1,43 @@
+---
+- name: Download containerd bins and systemd unit
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+    owner: 'root'
+    group: 'root'
+  loop:
+    - url: "https://github.com/containerd/containerd/releases/download/v{{ k8s_provision__containerd_version }}/containerd-{{ k8s_provision__containerd_version }}-linux-{{ k8s_provision__arch[ansible_facts['architecture']] }}.tar.gz"
+      dest: "/tmp/containerd.tar.gz"
+      mode: '0755'
+    - url: "https://raw.githubusercontent.com/containerd/containerd/main/containerd.service"
+      dest: "/etc/systemd/system/containerd.service"
+      mode: '0644'
+  loop_control:
+    label: "{{ item.dest }}"
+  notify: 'containerd-restart'
+
+- name: Unarchive containerd bins to /usr/local/bin
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "/tmp/containerd.tar.gz"
+    dest: "/usr/local/"
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: Create folder for containerd
+  ansible.builtin.file:
+    path: "/etc/containerd"
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: Generate containerd config
+  ansible.builtin.shell:
+    cmd: "containerd config default > /etc/containerd/config.toml"
+    creates: "/etc/containerd/config.toml"
+
+- name: Restart containerd daemon
+  ansible.builtin.meta:
+    free_form: flush_handlers

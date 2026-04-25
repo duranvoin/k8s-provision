@@ -1,38 +1,39 @@
-Role Name
+Имя роли
 =========
 
-A brief description of the role goes here.
+### k8s-provision - роль для провижна кубер нод и сборки неотказоустойчивого кластера
 
-Requirements
+Требования
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+По умолчанию кластер не собирается. Для его сборки нужно переопределить переменную **k8s_provision__cluster_create** со значением **true**, во время запуска плейбука с ролью.
 
-Role Variables
+Переменные роли
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+* **k8s_provision__arch** - автоматическое определение архитектуры процессора
+* **k8s_provision__containerd_version** - версия containerd
+* **k8s_provision__runc_version** - версия runc
+* **k8s_provision__cni_plugin_version** - версия сетевых плагинов
+* **k8s_provision__crictl_version** - версия crictl
+* **k8s_provision__release_version** - версия компонентов k8s
+* **k8s_provision__download_dir** - путь до стандартной директории для бинарников k8s из мануала
+* **k8s_provision__cidr** - подсеть для подов. По умолчанию используется сетевой плагин flannel и его подсеть.
+* **k8s_provision__kernel_modules** - модули ядра 
+* **k8s_provision__cluster_create** - булевая переменная для указания необходимости создания кластера. По умолчанию - false
 
-Dependencies
+Зависимости
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+**Роли:**
+- base-package-install
 
-Example Playbook
-----------------
+**Коллекции:**
+- ansible.posix
+- community.general
+- kubernetes.core
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
+Информация об авторе
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Kiselev Mikhail (duranvoin)
