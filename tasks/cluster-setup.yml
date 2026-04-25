@@ -48,7 +48,7 @@
 
   - name: Echo master node fqdn
     ansible.builtin.debug:
-      msg: "{{ k8s_provision__master_node }} is master node!"
+      msg: "Master node - {{ k8s_provision__master_node }}!!!"
     become: false
   run_once: true
   when: k8s_provision__cluster_create == true
