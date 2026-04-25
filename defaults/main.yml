@@ -13,3 +13,4 @@ k8s_provision__kernel_modules:
   - 'nf_conntrack'
   - 'br_netfilter'
 k8s_provision__cluster_create: false
+k8s_provision__master_node: ''
