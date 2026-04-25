@@ -1,7 +1,7 @@
 ---
 - name: Include tasks for role
   ansible.builtin.include_tasks:
-    free_form: "{{ item }}"
+    file: "{{ item }}"
   loop:
     - 'swap-disable.yml'
     - 'kernel-setup.yml'
