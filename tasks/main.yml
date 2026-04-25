@@ -1,7 +1,7 @@
 ---
 - name: Include tasks for role
   ansible.builtin.include_tasks:
-    file: "{{ item }}"
+    file: "{{ file }}"
   loop:
     - 'swap-disable.yml'
     - 'kernel-setup.yml'
@@ -9,3 +9,5 @@
     - 'containerd-install.yml'
     - 'k8s-components-install.yml'
     - 'cluster-setup.yml'
+  loop_control:
+    loop_var: file
