@@ -72,5 +72,4 @@
   notify: "kubelet-restart"
 
 - name: Restart kubelet daemon
-  ansible.builtin.meta:
-    free_form: flush_handlers
+  ansible.builtin.meta: flush_handlers

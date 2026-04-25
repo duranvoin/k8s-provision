@@ -39,5 +39,4 @@
     creates: "/etc/containerd/config.toml"
 
 - name: Restart containerd daemon
-  ansible.builtin.meta:
-    free_form: flush_handlers
+  ansible.builtin.meta: flush_handlers
